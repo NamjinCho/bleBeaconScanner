@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kr.ac.gachon.blebeaconscanner.scanner;
+package kr.ac.gachon.blebeaconscanner;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
@@ -28,6 +28,9 @@ import android.widget.TextView;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import kr.ac.gachon.blebeaconscanner.util.DateUtil;
+import kr.ac.gachon.blebeaconscanner.util.ScannedDevice;
 
 
 /**
@@ -54,6 +57,7 @@ public class DeviceAdapter extends ArrayAdapter<ScannedDevice> {
         if (convertView == null) {
             convertView = mInflater.inflate(mResId, null);
         }
+
         TextView name = (TextView) convertView.findViewById(R.id.device_name);
         name.setText(item.getDisplayName());
         TextView address = (TextView) convertView.findViewById(R.id.device_address);
@@ -65,9 +69,9 @@ public class DeviceAdapter extends ArrayAdapter<ScannedDevice> {
 
         TextView ibeaconInfo = (TextView) convertView.findViewById(R.id.device_ibeacon_info);
         Resources res = convertView.getContext().getResources();
-        if (item.getIBeacon() != null) {
+        if (item.getBeacon() != null) {
             ibeaconInfo.setText(res.getString(R.string.label_ibeacon) + "\n"
-                    + item.getIBeacon().toString());
+                    + item.getBeacon().toString());
         } else {
             ibeaconInfo.setText(res.getString(R.string.label_not_ibeacon));
         }
@@ -133,7 +137,7 @@ public class DeviceAdapter extends ArrayAdapter<ScannedDevice> {
         if (mList != null) {
             totalCount = mList.size();
             for (ScannedDevice device : mList) {
-                if (device.getIBeacon() != null) {
+                if (device.getBeacon() != null) {
                     iBeaconCount++;
                 }
             }

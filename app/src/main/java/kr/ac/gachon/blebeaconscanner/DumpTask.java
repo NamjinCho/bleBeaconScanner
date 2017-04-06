@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kr.ac.gachon.blebeaconscanner.scanner;
+package kr.ac.gachon.blebeaconscanner;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -23,8 +23,8 @@ import android.widget.Toast;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-import youten.redo.ble.util.CsvDumpUtil;
-import youten.redo.ble.util.ScannedDevice;
+import kr.ac.gachon.blebeaconscanner.util.CsvDumpUtil;
+import kr.ac.gachon.blebeaconscanner.util.ScannedDevice;
 
 public class DumpTask extends AsyncTask<List<ScannedDevice>, Integer, String> {
     private WeakReference<Context> mRef;

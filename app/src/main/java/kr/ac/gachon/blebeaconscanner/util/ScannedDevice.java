@@ -19,7 +19,6 @@ package kr.ac.gachon.blebeaconscanner.util;
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
 
-import com.radiusnetworks.ibeacon.Beacon;
 
 /** LeScanned Bluetooth Device */
 public class ScannedDevice {
@@ -49,10 +48,10 @@ public class ScannedDevice {
         }
         mRssi = rssi;
         mScanRecord = scanRecord;
-        checkIBeacon();
+        checkBeacon();
     }
 
-    private void checkIBeacon() {
+    private void checkBeacon() {
         if (mScanRecord != null) {
             mIBeacon = Beacon.fromScanData(mScanRecord, mRssi);
         }
@@ -88,10 +87,10 @@ public class ScannedDevice {
 
     public void setScanRecord(byte[] scanRecord) {
         mScanRecord = scanRecord;
-        checkIBeacon();
+        checkBeacon();
     }
 
-    public Beacon getIBeacon() {
+    public Beacon getBeacon() {
         return mIBeacon;
     }
 
@@ -119,29 +118,19 @@ public class ScannedDevice {
         return sb.toString();
     }
 
-    /**
-     * バイト配列を16進数の文字列に変換する。 http://d.hatena.ne.jp/winebarrel/20041012/p1
-     * 
-     * @param bytes バイト配列
-     * @return 16進数の文字列
-     */
     @SuppressLint("DefaultLocale")
     public static String asHex(byte bytes[]) {
         if ((bytes == null) || (bytes.length == 0)) {
             return "";
         }
 
-        // バイト配列の２倍の長さの文字列バッファを生成。
         StringBuffer sb = new StringBuffer(bytes.length * 2);
 
-        // バイト配列の要素数分、処理を繰り返す。
         for (int index = 0; index < bytes.length; index++) {
-            // バイト値を自然数に変換。
+
             int bt = bytes[index] & 0xff;
 
-            // バイト値が0x10以下か判定。
             if (bt < 0x10) {
-                // 0x10以下の場合、文字列バッファに0を追加。
                 sb.append("0");
             }
 

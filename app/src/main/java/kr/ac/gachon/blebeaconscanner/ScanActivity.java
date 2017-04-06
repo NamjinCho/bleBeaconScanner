@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package kr.ac.gachon.blebeaconscanner.scanner;
+package kr.ac.gachon.blebeaconscanner;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -38,8 +38,9 @@ import android.widget.Toast;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
-import youten.redo.ble.util.BleUtil;
-import youten.redo.ble.util.ScannedDevice;
+import kr.ac.gachon.blebeaconscanner.util.BleUtil;
+import kr.ac.gachon.blebeaconscanner.util.ScannedDevice;
+
 
 /**
  * BLEデバイスをスキャンし、一覧に表示するActivity。
@@ -125,7 +126,7 @@ public class ScanActivity extends Activity implements BluetoothAdapter.LeScanCal
             }
             
             mDumpTask = new DumpTask(new WeakReference<Context>(getApplicationContext()));
-            mDumpTask.execute(mDeviceAdapter.getList());
+            mDumpTask.execute((Runnable) mDeviceAdapter.getList());
             
         } else if (itemId == R.id.action_license) {
             showLicense();
