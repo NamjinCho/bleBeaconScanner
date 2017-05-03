@@ -23,8 +23,6 @@ import android.app.DialogFragment;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.content.Context;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -35,7 +33,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 
 import kr.ac.gachon.blebeaconscanner.util.BleUtil;
@@ -49,7 +46,7 @@ public class ScanActivity extends Activity implements BluetoothAdapter.LeScanCal
     private static final String TAG_LICENSE = "license";
     private BluetoothAdapter mBTAdapter;
     private DeviceAdapter mDeviceAdapter;
-    private DumpTask mDumpTask;
+   // private DumpTask mDumpTask;
     private boolean mIsScanning;
 
     @Override
@@ -120,14 +117,6 @@ public class ScanActivity extends Activity implements BluetoothAdapter.LeScanCal
                 getActionBar().setSubtitle("");
             }
             return true;
-        } else if (itemId == R.id.action_dump) {
-            if ((mDumpTask != null) && (mDumpTask.getStatus() != AsyncTask.Status.FINISHED)) {
-                return true;
-            }
-            
-            mDumpTask = new DumpTask(new WeakReference<Context>(getApplicationContext()));
-            mDumpTask.execute((Runnable) mDeviceAdapter.getList());
-            
         } else if (itemId == R.id.action_license) {
             showLicense();
             return true;

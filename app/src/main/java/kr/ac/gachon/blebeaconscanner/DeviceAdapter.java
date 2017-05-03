@@ -52,7 +52,7 @@ public class DeviceAdapter extends ArrayAdapter<ScannedDevice> {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ScannedDevice item = (ScannedDevice) getItem(position);
+        ScannedDevice item =  getItem(position);
 
         if (convertView == null) {
             convertView = mInflater.inflate(mResId, null);

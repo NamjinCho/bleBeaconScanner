@@ -18,6 +18,7 @@ package kr.ac.gachon.blebeaconscanner.util;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
+import android.util.Log;
 
 
 /** LeScanned Bluetooth Device */

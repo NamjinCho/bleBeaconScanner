@@ -76,10 +76,11 @@ public class Beacon {
      * A 16 byte UUID that typically represents the company owning a number of Beacons
      * Example: E2C56DB5-DFFB-48D2-B060-D0F5A71096E0 
      */
+
     //for eddystone , values
     protected int beaconType = 0;
     protected String nameSpace;
-    protected String intance;
+    protected String instance;
     protected String url;
 
     // beaconType , 0 = ibeacon , 1 = eddyStoneUID
@@ -136,7 +137,7 @@ public class Beacon {
         {
             this.beaconType=otherBeacon.beaconType;
             this.nameSpace=otherBeacon.nameSpace;
-            this.intance=otherBeacon.intance;
+            this.instance=otherBeacon.instance;
             this.rssi=otherBeacon.rssi;
             this.txPower=otherBeacon.txPower;
         }
@@ -157,91 +158,132 @@ public class Beacon {
 
     public static Beacon fromScanData(byte[] scanData, int rssi) {
         int startByte = 0;
-        // Check that this has the right pattern needed for this to be Eddystone-UID
-        if (scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
-                scanData[startByte + 2] == (byte) 0x00) {
-            // This is an Eddystone-UID beacon.
 
-
-            byte[] namespaceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 4, startByte + 13);
-            byte[] instanceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 14, startByte + 19);
-            String nameSpaceString = bytesToHex(namespaceIdentifierBytes);
-            String instanceString = bytesToHex(instanceIdentifierBytes);
-            Beacon beacon = new Beacon();
-            beacon.nameSpace = nameSpaceString;
-            beacon.intance=instanceString;
-            beacon.beaconType = 1;
-            beacon.rssi=rssi;
-            beacon.txPower = (int) scanData[startByte + 3];
-            return beacon;
-
-        //    String hexString = bytesToHex(proximityUuidBytes);
-            // TODO: do something with the above identifiers here
-        }
-        else if(scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
-                scanData[startByte + 2] == (byte) 0x10)
+        int scanLength = scanData.length;
+        while (startByte<=11)
         {
-            String prefix;
-            if(scanData[startByte+4]==(byte)0x00)
-                prefix="http://www.";
-            else if(scanData[startByte+4]==(byte)0x00)
-                prefix="https://www.";
-            else if(scanData[startByte+4]==(byte)0x00)
-                prefix="http://";
-            else
-                prefix="https://";
-            byte[] encodedURL = Arrays.copyOfRange(scanData, startByte + 5, scanData.length-1);
-            String encodedURLString = prefix+bytesToHex(encodedURL);
-            Beacon beacon = new Beacon();
-            beacon.beaconType = 2;
-            beacon.url = encodedURLString;
-            beacon.rssi=rssi;
-            beacon.txPower = (int) scanData[startByte + 3];
-            return beacon;
+            // Check that this has the right pattern needed for this to be Eddystone-UID
+            if (scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
+                    scanData[startByte + 2] == (byte) 0x00) {
+                // This is an Eddystone-UID beacon.
+
+
+                byte[] namespaceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 4, startByte + 13);
+                byte[] instanceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 14, startByte + 19);
+                String nameSpaceString = bytesToHex(namespaceIdentifierBytes);
+                String instanceString = bytesToHex(instanceIdentifierBytes);
+
+                Log.d("디버깅","네임스페이스" +nameSpaceString );
+                Beacon beacon = new Beacon();
+                beacon.nameSpace = nameSpaceString;
+                beacon.instance=instanceString;
+                beacon.beaconType = 1;
+                beacon.rssi=rssi;
+                beacon.txPower = (int) scanData[startByte + 3];
+                return beacon;
+
+                //    String hexString = bytesToHex(proximityUuidBytes);
+                // TODO: do something with the above identifiers here
+            }
+            else if(scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone URL
+                    scanData[startByte + 2] == (byte) 0x10)
+            {
+                String prefix;
+                if(scanData[startByte+4]==(byte)0x00)
+                    prefix="http://www.";
+                else if(scanData[startByte+4]==(byte)0x01)
+                    prefix="https://www.";
+                else if(scanData[startByte+4]==(byte)0x02)
+                    prefix="http://";
+                else
+                    prefix="https://";
+                String encodedURLString=prefix;
+                byte[] encodedURL = Arrays.copyOfRange(scanData, startByte + 5, scanData.length-1);
+                encodedURLString+=getURL(encodedURL);
+
+
+                Beacon beacon = new Beacon();
+                beacon.beaconType = 2;
+                beacon.url = encodedURLString;
+                beacon.rssi=rssi;
+                beacon.txPower = (int) scanData[startByte + 3];
+                return beacon;
+            }
+            startByte++;
         }
-        else if (((int) scanData[startByte] & 0xff) == 0x4c &&
-                ((int) scanData[startByte + 1] & 0xff) == 0x00 &&
-                ((int) scanData[startByte + 2] & 0xff) == 0x02 &&
-                ((int) scanData[startByte + 3] & 0xff) == 0x15) {//Beacon
 
-            Beacon beacon = new Beacon();
-            beacon.beaconType = 0;
-            beacon.major = (scanData[startByte + 20] & 0xff) * 0x100 + (scanData[startByte + 21] & 0xff);
-            beacon.minor = (scanData[startByte + 22] & 0xff) * 0x100 + (scanData[startByte + 23] & 0xff);
-            beacon.txPower = (int) scanData[startByte + 24]; // this one is signed
-            beacon.rssi = rssi;
 
-            byte[] proximityUuidBytes = new byte[16];
-            System.arraycopy(scanData, startByte + 4, proximityUuidBytes, 0, 16);
-            String hexString = bytesToHex(proximityUuidBytes);
-            StringBuilder sb = new StringBuilder();
 
-            sb.append(hexString.substring(0, 8));
-            sb.append("-");
-            sb.append(hexString.substring(8, 12));
-            sb.append("-");
-            sb.append(hexString.substring(12, 16));
-            sb.append("-");
-            sb.append(hexString.substring(16, 20));
-            sb.append("-");
-            sb.append(hexString.substring(20, 32));
+        startByte=0;
+        while (startByte <= 5) {
 
-            beacon.proximityUuid = sb.toString();
-            return beacon;
-            // yes!  This is an Beacon
-            //patternFound = true;
+            if (((int) scanData[startByte] & 0xff) == 0x4c &&
+                    ((int) scanData[startByte + 1] & 0xff) == 0x00 &&
+                    ((int) scanData[startByte + 2] & 0xff) == 0x02 &&
+                    ((int) scanData[startByte + 3] & 0xff) == 0x15) {//Beacon
+
+                Beacon beacon = new Beacon();
+                beacon.beaconType = 0;
+                beacon.major = (scanData[startByte + 20] & 0xff) * 0x100 + (scanData[startByte + 21] & 0xff);
+                beacon.minor = (scanData[startByte + 22] & 0xff) * 0x100 + (scanData[startByte + 23] & 0xff);
+                beacon.txPower = (int) scanData[startByte + 24]; // this one is signed
+                beacon.rssi = rssi;
+
+                byte[] proximityUuidBytes = new byte[16];
+                System.arraycopy(scanData, startByte + 4, proximityUuidBytes, 0, 16);
+                String hexString = bytesToHex(proximityUuidBytes);
+                StringBuilder sb = new StringBuilder();
+
+                sb.append(hexString.substring(0, 8));
+                sb.append("-");
+                sb.append(hexString.substring(8, 12));
+                sb.append("-");
+                sb.append(hexString.substring(12, 16));
+                sb.append("-");
+                sb.append(hexString.substring(16, 20));
+                sb.append("-");
+                sb.append(hexString.substring(20, 32));
+
+                beacon.proximityUuid = sb.toString();
+                return beacon;
+                // yes!  This is an Beacon
+                //patternFound = true;
+            }
+
+            else if (((int)scanData[startByte] & 0xff) == 0x2d &&
+
+                    ((int)scanData[startByte+1] & 0xff) == 0x24 &&
+
+                    ((int)scanData[startByte+2] & 0xff) == 0xbf &&
+
+                    ((int)scanData[startByte+3] & 0xff) == 0x16) {
+
+                // this is an Estimote beacon
+
+                Beacon beacon = new Beacon();
+
+                beacon.major = 0;
+
+                beacon.minor = 0;
+
+                beacon.proximityUuid = "00000000-0000-0000-0000-000000000000";
+
+                beacon.txPower = -55;
+
+                return beacon;
+
+            }
+
+            startByte++;
+
         }
+
+
+
+
         // need at least 24 bytes for AltBeacon
         // Check that this has the right pattern needed for this to be AltBeacon
         // Beacon has a slightly different layout.  Do a Google search to find it.
-        else if (scanData[startByte + 2] == (byte) 0xbe && scanData[startByte + 3] == (byte) 0xac) {//altbeacon
-            // This is an AltBeacon
-            byte[] uuidBytes = Arrays.copyOfRange(scanData, startByte + 4, startByte + 19);
-            byte[] majorBytes = Arrays.copyOfRange(scanData, startByte + 20, startByte + 21);
-            byte[] minorBytes = Arrays.copyOfRange(scanData, startByte + 22, startByte + 23);
-            // TODO: do something with the above identifiers here
-        } else
-            return null;
 
         return null;
     }
@@ -263,7 +305,25 @@ public class Beacon {
             return accuracy;
         }
     }
+    protected static String getURL(byte [] bytes)
+    {
+        String result ="";
+        boolean flag=true;
+        String []endString = {
+                ".com/",".org/",".edu/",".net/",".info/",".biz/"
+                ,".gov/",".com",".org",".edu",".net",".info",".biz",".gov"
+        };
 
+        for(int i=0;i<bytes.length;i++) {
+
+
+                char character = (char)bytes[i];
+                result+= character;
+
+        }
+
+        return result;
+    }
     protected static int calculateProximity(double accuracy) {
         if (accuracy < 0) {
             return PROXIMITY_UNKNOWN;
@@ -375,6 +435,9 @@ public class Beacon {
     @SuppressLint("DefaultLocale")
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("beaconType").append(beaconType).append("\n");
+
+
         if(this.beaconType==0) {
             sb.append("UUID=").append(this.proximityUuid.toUpperCase());
             sb.append(" Major=").append(this.major);
@@ -384,7 +447,11 @@ public class Beacon {
         else if (this.beaconType==1)
         {
             sb.append("Namespace=").append(this.nameSpace);
-            sb.append(" Instance=").append(this.intance);
+            sb.append(" Instance=").append(this.instance);
+            sb.append(" TxPower=").append(this.txPower);
+        }else if(this.beaconType==2)
+        {
+            sb.append("EddystoneURL=").append(this.url);
             sb.append(" TxPower=").append(this.txPower);
         }
 
