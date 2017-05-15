@@ -102,7 +102,7 @@ public class DeviceAdapter extends ArrayAdapter<ScannedDevice> {
                 // update
                 device.setRssi(rssi);
                 device.setLastUpdatedMs(now);
-                device.setScanRecord(scanRecord);
+                device.setScanRecord(scanRecord,newDevice);
                 break;
             }
         }

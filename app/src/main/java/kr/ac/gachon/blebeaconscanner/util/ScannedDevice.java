@@ -18,7 +18,6 @@ package kr.ac.gachon.blebeaconscanner.util;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothDevice;
-import android.util.Log;
 
 
 /** LeScanned Bluetooth Device */
@@ -49,12 +48,12 @@ public class ScannedDevice {
         }
         mRssi = rssi;
         mScanRecord = scanRecord;
-        checkBeacon();
+        checkBeacon(device);
     }
 
-    private void checkBeacon() {
+    private void checkBeacon(BluetoothDevice device) {
         if (mScanRecord != null) {
-            mIBeacon = Beacon.fromScanData(mScanRecord, mRssi);
+            mIBeacon = Beacon.fromScanData(mScanRecord, mRssi,device);
         }
     }
 
@@ -86,9 +85,9 @@ public class ScannedDevice {
         return ScannedDevice.asHex(mScanRecord);
     }
 
-    public void setScanRecord(byte[] scanRecord) {
+    public void setScanRecord(byte[] scanRecord,BluetoothDevice device) {
         mScanRecord = scanRecord;
-        checkBeacon();
+        checkBeacon(device);
     }
 
     public Beacon getBeacon() {

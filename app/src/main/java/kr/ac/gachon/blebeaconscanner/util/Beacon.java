@@ -24,6 +24,7 @@
 package kr.ac.gachon.blebeaconscanner.util;
 
 import android.annotation.SuppressLint;
+import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -74,7 +75,7 @@ public class Beacon {
 
     /**
      * A 16 byte UUID that typically represents the company owning a number of Beacons
-     * Example: E2C56DB5-DFFB-48D2-B060-D0F5A71096E0 
+     * Example: E2C56DB5-DFFB-48D2-B060-D0F5A71096E0
      */
 
     //for eddystone , values
@@ -83,6 +84,7 @@ public class Beacon {
     protected String instance;
     protected String url;
 
+    protected String deviceName;
     // beaconType , 0 = ibeacon , 1 = eddyStoneUID
     protected String proximityUuid;
     /**
@@ -104,7 +106,7 @@ public class Beacon {
     /**
      * A double that is an estimate of how far the Beacon is away in meters.  This name is confusing, but is copied from
      * the iOS7 SDK terminology.   Note that this number fluctuates quite a bit with RSSI, so despite the name, it is not
-     * super accurate.   It is recommended to instead use the proximity field, or your own bucketization of this value. 
+     * super accurate.   It is recommended to instead use the proximity field, or your own bucketization of this value.
      */
     protected Double accuracy;
     /**
@@ -156,7 +158,7 @@ public class Beacon {
      * @return An instance of an <code>Beacon</code>
      */
 
-    public static Beacon fromScanData(byte[] scanData, int rssi) {
+    public static Beacon fromScanData(byte[] scanData, int rssi , BluetoothDevice device) {
         int startByte = 0;
 
         int scanLength = scanData.length;
@@ -180,6 +182,8 @@ public class Beacon {
                 beacon.beaconType = 1;
                 beacon.rssi=rssi;
                 beacon.txPower = (int) scanData[startByte + 3];
+                beacon.setDeviceName(device.getAddress());
+                Log.d("Debuging",device.getAddress());
                 return beacon;
 
                 //    String hexString = bytesToHex(proximityUuidBytes);
@@ -207,6 +211,7 @@ public class Beacon {
                 beacon.url = encodedURLString;
                 beacon.rssi=rssi;
                 beacon.txPower = (int) scanData[startByte + 3];
+                beacon.setDeviceName(device.getAddress());
                 return beacon;
             }
             startByte++;
@@ -245,6 +250,7 @@ public class Beacon {
                 sb.append(hexString.substring(20, 32));
 
                 beacon.proximityUuid = sb.toString();
+                beacon.setDeviceName(device.getAddress());
                 return beacon;
                 // yes!  This is an Beacon
                 //patternFound = true;
@@ -269,7 +275,7 @@ public class Beacon {
                 beacon.proximityUuid = "00000000-0000-0000-0000-000000000000";
 
                 beacon.txPower = -55;
-
+                beacon.setDeviceName(device.getAddress());
                 return beacon;
 
             }
@@ -286,6 +292,15 @@ public class Beacon {
         // Beacon has a slightly different layout.  Do a Google search to find it.
 
         return null;
+    }
+
+    public void setDeviceName(String name)
+    {
+        deviceName = name;
+    }
+    public String getDeviceName()
+    {
+        return this.deviceName;
     }
 
     protected static double calculateAccuracy(int txPower, double rssi) {
@@ -309,16 +324,29 @@ public class Beacon {
     {
         String result ="";
         boolean flag=true;
+        int count = 1;
         String []endString = {
                 ".com/",".org/",".edu/",".net/",".info/",".biz/"
                 ,".gov/",".com",".org",".edu",".net",".info",".biz",".gov"
         };
 
-        for(int i=0;i<bytes.length;i++) {
+        for(int i=0;i<bytes.length && flag;i++) {
 
 
-                char character = (char)bytes[i];
-                result+= character;
+            char character = (char)bytes[i];
+            if((int)character < 14)
+            {
+                if(count == 2)
+                    break;
+                if((int)character>6)
+                    flag = false;
+                else
+                    count++;
+                result += endString[(int)character];
+                continue;
+            }
+
+            result+= character;
 
         }
 
@@ -435,8 +463,8 @@ public class Beacon {
     @SuppressLint("DefaultLocale")
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("beaconType").append(beaconType).append("\n");
-
+        sb.append("beaconType = ").append(beaconType).append("\n");
+        sb.append("DeviceName = ").append(this.deviceName).append("\n");
 
         if(this.beaconType==0) {
             sb.append("UUID=").append(this.proximityUuid.toUpperCase());
