@@ -24,7 +24,6 @@
 package kr.ac.gachon.blebeaconscanner.util;
 
 import android.annotation.SuppressLint;
-import android.bluetooth.BluetoothDevice;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -77,13 +76,12 @@ public class Beacon {
      * A 16 byte UUID that typically represents the company owning a number of Beacons
      * Example: E2C56DB5-DFFB-48D2-B060-D0F5A71096E0
      */
+
     //for eddystone , values
     protected int beaconType = 0;
     protected String nameSpace;
-    protected String intance;
+    protected String instance;
     protected String url;
-
-    protected String deviceName;
     // beaconType , 0 = ibeacon , 1 = eddyStoneUID
     protected String proximityUuid;
     /**
@@ -138,7 +136,7 @@ public class Beacon {
         {
             this.beaconType=otherBeacon.beaconType;
             this.nameSpace=otherBeacon.nameSpace;
-            this.intance=otherBeacon.intance;
+            this.instance=otherBeacon.instance;
             this.rssi=otherBeacon.rssi;
             this.txPower=otherBeacon.txPower;
         }
@@ -157,33 +155,12 @@ public class Beacon {
      * @return An instance of an <code>Beacon</code>
      */
 
-    public static Beacon fromScanData(byte[] scanData, int rssi , BluetoothDevice device) {
+    public static Beacon fromScanData(byte[] scanData, int rssi) {
         int startByte = 0;
-        // Check that this has the right pattern needed for this to be Eddystone-UID
-        if (scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
-                scanData[startByte + 2] == (byte) 0x00) {
-            // This is an Eddystone-UID beacon.
 
-
-            byte[] namespaceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 4, startByte + 13);
-            byte[] instanceIdentifierBytes = Arrays.copyOfRange(scanData, startByte + 14, startByte + 19);
-            String nameSpaceString = bytesToHex(namespaceIdentifierBytes);
-            String instanceString = bytesToHex(instanceIdentifierBytes);
-            Beacon beacon = new Beacon();
-            beacon.nameSpace = nameSpaceString;
-            beacon.intance=instanceString;
-            beacon.beaconType = 1;
-            beacon.rssi=rssi;
-            beacon.txPower = (int) scanData[startByte + 3];
-            return beacon;
-
-        //    String hexString = bytesToHex(proximityUuidBytes);
-            // TODO: do something with the above identifiers here
-        }
-        else if(scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
-                scanData[startByte + 2] == (byte) 0x10)
+        int scanLength = scanData.length;
+        while (startByte<=11)
         {
-<<<<<<< HEAD
             // Check that this has the right pattern needed for this to be Eddystone-UID
             if (scanData[startByte + 0] == (byte) 0xaa && scanData[startByte + 1] == (byte) 0xfe &&//eddystone
                     scanData[startByte + 2] == (byte) 0x00) {
@@ -202,8 +179,6 @@ public class Beacon {
                 beacon.beaconType = 1;
                 beacon.rssi=rssi;
                 beacon.txPower = (int) scanData[startByte + 3];
-                beacon.setDeviceName(device.getAddress());
-                Log.d("Debuging",device.getAddress());
                 return beacon;
 
                 //    String hexString = bytesToHex(proximityUuidBytes);
@@ -231,7 +206,6 @@ public class Beacon {
                 beacon.url = encodedURLString;
                 beacon.rssi=rssi;
                 beacon.txPower = (int) scanData[startByte + 3];
-                beacon.setDeviceName(device.getAddress());
                 return beacon;
             }
             startByte++;
@@ -270,7 +244,6 @@ public class Beacon {
                 sb.append(hexString.substring(20, 32));
 
                 beacon.proximityUuid = sb.toString();
-                beacon.setDeviceName(device.getAddress());
                 return beacon;
                 // yes!  This is an Beacon
                 //patternFound = true;
@@ -295,87 +268,23 @@ public class Beacon {
                 beacon.proximityUuid = "00000000-0000-0000-0000-000000000000";
 
                 beacon.txPower = -55;
-                beacon.setDeviceName(device.getAddress());
+
                 return beacon;
 
             }
 
             startByte++;
 
-=======
-            String prefix;
-            if(scanData[startByte+4]==(byte)0x00)
-                prefix="http://www.";
-            else if(scanData[startByte+4]==(byte)0x00)
-                prefix="https://www.";
-            else if(scanData[startByte+4]==(byte)0x00)
-                prefix="http://";
-            else
-                prefix="https://";
-            byte[] encodedURL = Arrays.copyOfRange(scanData, startByte + 5, scanData.length-1);
-            String encodedURLString = prefix+bytesToHex(encodedURL);
-            Beacon beacon = new Beacon();
-            beacon.beaconType = 2;
-            beacon.url = encodedURLString;
-            beacon.rssi=rssi;
-            beacon.txPower = (int) scanData[startByte + 3];
-            return beacon;
         }
-        else if (((int) scanData[startByte] & 0xff) == 0x4c &&
-                ((int) scanData[startByte + 1] & 0xff) == 0x00 &&
-                ((int) scanData[startByte + 2] & 0xff) == 0x02 &&
-                ((int) scanData[startByte + 3] & 0xff) == 0x15) {//Beacon
 
-            Beacon beacon = new Beacon();
-            beacon.beaconType = 0;
-            beacon.major = (scanData[startByte + 20] & 0xff) * 0x100 + (scanData[startByte + 21] & 0xff);
-            beacon.minor = (scanData[startByte + 22] & 0xff) * 0x100 + (scanData[startByte + 23] & 0xff);
-            beacon.txPower = (int) scanData[startByte + 24]; // this one is signed
-            beacon.rssi = rssi;
 
-            byte[] proximityUuidBytes = new byte[16];
-            System.arraycopy(scanData, startByte + 4, proximityUuidBytes, 0, 16);
-            String hexString = bytesToHex(proximityUuidBytes);
-            StringBuilder sb = new StringBuilder();
 
-            sb.append(hexString.substring(0, 8));
-            sb.append("-");
-            sb.append(hexString.substring(8, 12));
-            sb.append("-");
-            sb.append(hexString.substring(12, 16));
-            sb.append("-");
-            sb.append(hexString.substring(16, 20));
-            sb.append("-");
-            sb.append(hexString.substring(20, 32));
 
-            beacon.proximityUuid = sb.toString();
-            return beacon;
-            // yes!  This is an Beacon
-            //patternFound = true;
->>>>>>> parent of 565aa89... Add
-        }
         // need at least 24 bytes for AltBeacon
         // Check that this has the right pattern needed for this to be AltBeacon
         // Beacon has a slightly different layout.  Do a Google search to find it.
-        else if (scanData[startByte + 2] == (byte) 0xbe && scanData[startByte + 3] == (byte) 0xac) {//altbeacon
-            // This is an AltBeacon
-            byte[] uuidBytes = Arrays.copyOfRange(scanData, startByte + 4, startByte + 19);
-            byte[] majorBytes = Arrays.copyOfRange(scanData, startByte + 20, startByte + 21);
-            byte[] minorBytes = Arrays.copyOfRange(scanData, startByte + 22, startByte + 23);
-            // TODO: do something with the above identifiers here
-        } else
-            return null;
 
         return null;
-    }
-
-    public void setDeviceName(String name)
-    {
-        deviceName = name;
-    }
-    public String getDeviceName()
-    {
-        return this.deviceName;
     }
 
     protected static double calculateAccuracy(int txPower, double rssi) {
@@ -395,42 +304,25 @@ public class Beacon {
             return accuracy;
         }
     }
-<<<<<<< HEAD
     protected static String getURL(byte [] bytes)
     {
         String result ="";
         boolean flag=true;
-        int count = 1;
         String []endString = {
                 ".com/",".org/",".edu/",".net/",".info/",".biz/"
                 ,".gov/",".com",".org",".edu",".net",".info",".biz",".gov"
         };
 
-        for(int i=0;i<bytes.length && flag;i++) {
+        for(int i=0;i<bytes.length;i++) {
 
 
             char character = (char)bytes[i];
-            if((int)character < 14)
-            {
-                if(count == 2)
-                    break;
-                if((int)character>6)
-                    flag = false;
-                else
-                    count++;
-                result += endString[(int)character];
-                continue;
-            }
-
             result+= character;
 
         }
 
         return result;
     }
-=======
-
->>>>>>> parent of 565aa89... Add
     protected static int calculateProximity(double accuracy) {
         if (accuracy < 0) {
             return PROXIMITY_UNKNOWN;
@@ -522,6 +414,21 @@ public class Beacon {
         return proximityUuid;
     }
 
+    public String getNameSpace()
+    {
+        return nameSpace;
+    }
+    public String instance()
+    {
+        return this.instance;
+    }
+    public String getUrl()
+    {
+        return this.url;
+    }
+    public int getBeaconType(){
+        return this.beaconType;
+    }
     @Override
     public int hashCode() {
         return minor;
@@ -542,12 +449,9 @@ public class Beacon {
     @SuppressLint("DefaultLocale")
     public String toString() {
         StringBuilder sb = new StringBuilder();
-<<<<<<< HEAD
-        sb.append("beaconType = ").append(beaconType).append("\n");
-        sb.append("DeviceName = ").append(this.deviceName).append("\n");
+        sb.append("beaconType").append(beaconType).append("\n");
 
-=======
->>>>>>> parent of 565aa89... Add
+
         if(this.beaconType==0) {
             sb.append("UUID=").append(this.proximityUuid.toUpperCase());
             sb.append(" Major=").append(this.major);
@@ -557,7 +461,11 @@ public class Beacon {
         else if (this.beaconType==1)
         {
             sb.append("Namespace=").append(this.nameSpace);
-            sb.append(" Instance=").append(this.intance);
+            sb.append(" Instance=").append(this.instance);
+            sb.append(" TxPower=").append(this.txPower);
+        }else if(this.beaconType==2)
+        {
+            sb.append("EddystoneURL=").append(this.url);
             sb.append(" TxPower=").append(this.txPower);
         }
 
