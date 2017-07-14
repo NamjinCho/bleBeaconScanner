@@ -418,7 +418,7 @@ public class Beacon {
     {
         return nameSpace;
     }
-    public String instance()
+    public String getInstance()
     {
         return this.instance;
     }
